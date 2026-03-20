@@ -34,6 +34,7 @@ export const taskApiservice = {
 };
 
 // 2. Función de Login independiente (Esto soluciona tu error de la imagen)
+// Al final de src/api/apiService.js, fuera de cualquier llave { }
 export const loginService = async (email, password) => {
     const response = await fetch(`${BASE_URL}/auth/login/`, {
         method: "POST",
