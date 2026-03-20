@@ -1,46 +1,49 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Asegúrate de que esta IP sea la de tu PC (ipconfig en CMD)
+// src/api/apiService.js
 const BASE_URL = "http://192.168.1.12:8000/api";
 
+// 1. Objeto para tareas (GetAll, Create, Update, Delete)
 export const taskApiservice = {
-
     getAll: (token) => fetch(`${BASE_URL}/tareas/`, {
-        headers:{
-            'Authorization': `Bearer ${token}`,
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
     }).then(res => res.json()),
 
-    // crear
-    create: (token, data) =>fetch(`${BASE_URL}/tareas/`, {
+    create: (token, data) => fetch(`${BASE_URL}/tareas/`, {
         method: "POST",
-         headers:{
+        headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     }).then(res => res.json()),
 
-    // editar
     update: (token, id, data) => fetch(`${BASE_URL}/tareas/${id}/`, {
         method: "PUT",
-         headers:{
+        headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(data)
     }).then(res => res.json()),
 
-
-    // eliminar
     delete: (token, id) => fetch(`${BASE_URL}/tareas/${id}/`, {
         method: "DELETE",
-         headers:{
-            'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
     })
-}
+};
 
+// 2. Función de Login independiente (Esto soluciona tu error de la imagen)
+export const loginService = async (email, password) => {
+    const response = await fetch(`${BASE_URL}/auth/login/`, {
+        method: "POST",
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Error en login');
+    return data;
+};
 // export const loginService = async (email, password) => {
 //     try {
 //         const response = await fetch(`${BASE_URL}/auth/login/`, {
