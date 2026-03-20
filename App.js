@@ -82,12 +82,13 @@ const NavigationWrapper = () => {
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.card}>
-                        {/* Se eliminó numberOfLines para que el texto salga completo */}
+                        {/* El texto saldrá completo */}
                         <View style={{ flex: 1 }}>
                             <Text style={styles.taskTitle}>{item.titulo}</Text>
                             <Text style={styles.taskDesc}>{item.descripcion}</Text>
                         </View>
                         
+                        {/* Los botones siempre estarán centrados verticalmente */}
                         <View style={styles.actionsContainer}>
                             <TouchableOpacity onPress={() => handleEdit(item)}>
                                 <Text style={styles.btnEdit}>Editar</Text>
@@ -124,17 +125,17 @@ const styles = StyleSheet.create({
         marginBottom: 10, 
         borderRadius: 8, 
         flexDirection: 'row', 
-        // Cambiado a flex-start para que los botones queden arriba si el texto es largo
-        alignItems: 'flex-start', 
+        // 'center' asegura que los botones se centren verticalmente 
+        // respecto a la altura total de la tarjeta
+        alignItems: 'center', 
         elevation: 2 
     },
     taskTitle: { fontWeight: 'bold', fontSize: 16, marginBottom: 5 },
-    taskDesc: { fontSize: 14, color: '#444' }, // Estilo para la descripción
+    taskDesc: { fontSize: 14, color: '#444' },
     actionsContainer: { 
         flexDirection: 'row', 
         alignItems: 'center', 
-        marginLeft: 10,
-        marginTop: 5 // Pequeño margen superior para alinear con el título
+        marginLeft: 10
     },
     btnEdit: { 
         color: 'blue', 
