@@ -15,15 +15,14 @@ import {
 import { AuthProvider, AuthContext } from './context/authContext';
 import { taskApiservice } from './src/api/apiService';
 import LoginScreen from './screens/LoginScreen';
-import TaskScreen from './screens/TaskScreen'; // Asegúrate que el archivo exista
+import TaskScreen from './screens/TaskScreen';
 
 const NavigationWrapper = () => {
     const { userToken, userData, logout, isLoading } = useContext(AuthContext);
     const [tasks, setTasks] = useState([]);
-    const [view, setView] = useState('list'); // 'list' o 'create'
-    const [selectedTask, setSelectedTask] = useState(null); // Para editar
+    const [view, setView] = useState('list');
+    const [selectedTask, setSelectedTask] = useState(null);
 
-    // Función para cargar tareas desde Django
     const cargarTareas = () => {
         if (userToken) {
             taskApiservice.getAll(userToken)
@@ -36,13 +35,11 @@ const NavigationWrapper = () => {
         cargarTareas();
     }, [userToken]);
 
-    // Función para abrir el formulario de edición
     const handleEdit = (tarea) => {
         setSelectedTask(tarea);
-        setView('create'); // Cambiamos a la vista de creación/edición
+        setView('create');
     };
 
-    // Función para abrir el formulario de nueva tarea
     const handleNew = () => {
         setSelectedTask(null);
         setView('create');
@@ -51,7 +48,6 @@ const NavigationWrapper = () => {
     if (isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
     if (!userToken) return <LoginScreen />;
     
-    // Mostramos TaskScreen si la vista es 'create'
     if (view === 'create') {
         return (
             <TaskScreen 
@@ -68,7 +64,6 @@ const NavigationWrapper = () => {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {/* FOTO DEL USUARIO (desde Django/Cloudinary) */}
                     <Image 
                         source={{ uri: userData?.foto_url || 'https://via.placeholder.com/50' }} 
                         style={styles.avatar} 
@@ -78,30 +73,26 @@ const NavigationWrapper = () => {
                 <Button title="Salir" onPress={logout} color="red" />
             </View>
 
-            {/* BOTÓN PARA NUEVA TAREA */}
             <TouchableOpacity style={styles.btnNueva} onPress={handleNew}>
                 <Text style={styles.btnText}>+ NUEVA TAREA</Text>
             </TouchableOpacity>
 
-            {/* LISTA DE TAREAS CORREGIDA */}
             <FlatList
                 data={tasks}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
                     <View style={styles.card}>
+                        {/* Se eliminó numberOfLines para que el texto salga completo */}
                         <View style={{ flex: 1 }}>
                             <Text style={styles.taskTitle}>{item.titulo}</Text>
-                            <Text numberOfLines={1}>{item.descripcion}</Text>
+                            <Text style={styles.taskDesc}>{item.descripcion}</Text>
                         </View>
                         
-                        {/* CONTENEDOR DE ACCIONES (LADO DERECHO) */}
                         <View style={styles.actionsContainer}>
-                            {/* BOTÓN EDITAR */}
                             <TouchableOpacity onPress={() => handleEdit(item)}>
                                 <Text style={styles.btnEdit}>Editar</Text>
                             </TouchableOpacity>
                             
-                            {/* BOTÓN ELIMINAR */}
                             <TouchableOpacity onPress={() => {
                                 Alert.alert("Eliminar", "¿Borrar esta tarea?", [
                                     { text: "No" },
@@ -127,22 +118,23 @@ const styles = StyleSheet.create({
     welcome: { fontSize: 18, fontWeight: 'bold' },
     btnNueva: { backgroundColor: 'green', padding: 15, borderRadius: 10, marginVertical: 20, alignItems: 'center' },
     btnText: { color: 'white', fontWeight: 'bold' },
-    // Tarjeta de tarea
     card: { 
         padding: 15, 
         backgroundColor: 'white', 
         marginBottom: 10, 
         borderRadius: 8, 
         flexDirection: 'row', 
-        alignItems: 'center', 
+        // Cambiado a flex-start para que los botones queden arriba si el texto es largo
+        alignItems: 'flex-start', 
         elevation: 2 
     },
-    taskTitle: { fontWeight: 'bold', fontSize: 16 },
-    // Acciones de la tarjeta
+    taskTitle: { fontWeight: 'bold', fontSize: 16, marginBottom: 5 },
+    taskDesc: { fontSize: 14, color: '#444' }, // Estilo para la descripción
     actionsContainer: { 
         flexDirection: 'row', 
         alignItems: 'center', 
-        marginLeft: 10 
+        marginLeft: 10,
+        marginTop: 5 // Pequeño margen superior para alinear con el título
     },
     btnEdit: { 
         color: 'blue', 
