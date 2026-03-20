@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // src/api/apiService.js
-const BASE_URL = "http://192.168.1.12:8000/api";
+// src/api/apiService.js
+const BASE_URL = "http://192.168.1.8:8000/api"; // Cambiado de .12 a .8
 
 // 1. Objeto para tareas (GetAll, Create, Update, Delete)
 export const taskApiservice = {
