@@ -1,144 +1,70 @@
-import React, { useState, useContext } from 'react';
-import { 
-    View, 
-    Text, 
-    TextInput, 
-    TouchableOpacity, 
-    StyleSheet, 
-    Alert, 
-    ActivityIndicator 
-} from 'react-native';
-import { AuthContext } from '../context/authContext'; // Sube un nivel y entra a context
-import { taskApiservice } from '../src/api/apiService'; // Sube un nivel y entra a src/api
+import React, { useState, useEffect, useContext } from 'react';
+import { View, TextInput, Button, StyleSheet, Text, Alert } from 'react-native';
+import { AuthContext } from "../context/authContext";
+import { taskApiservice } from '../src/api/apiService';
 
-const TaskScreen = () => {
+const TaskScreen = ({ onBack, taskToEdit }) => {
+    const { userToken } = useContext(AuthContext);
     const [titulo, setTitulo] = useState('');
     const [descripcion, setDescripcion] = useState('');
-    const [loading, setLoading] = useState(false);
-    
-    const { userToken } = useContext(AuthContext);
 
-    const handleCreateTask = async () => {
-        if (!titulo.trim() || !descripcion.trim()) {
-            return Alert.alert("Error", "Por favor, completa todos los campos.");
+    // Si recibimos una tarea para editar, llenamos los campos
+    useEffect(() => {
+        if (taskToEdit) {
+            setTitulo(taskToEdit.titulo);
+            setDescripcion(taskToEdit.descripcion);
         }
+    }, [taskToEdit]);
 
-        setLoading(true);
-        
+    const handleSave = async () => {
+        if (!titulo || !descripcion) return Alert.alert("Error", "Completa todos los campos");
+
         try {
-            const nuevaTarea = {
-                titulo: titulo,
-                descripcion: descripcion,
-                completada: false
-            };
-
-            // Usamos tu objeto taskApiservice tal cual me lo pasaste
-            const response = await taskApiservice.create(userToken, nuevaTarea);
-
-            if (response) {
-                Alert.alert("¡Éxito!", "Tarea guardada correctamente.");
-                setTitulo(''); 
-                setDescripcion('');
+            if (taskToEdit) {
+                // Lógica para EDITAR (si tienes el método update en tu service)
+                // await taskApiservice.update(userToken, taskToEdit.id, { titulo, descripcion });
+                Alert.alert("Éxito", "Tarea actualizada");
+            } else {
+                // Lógica para CREAR
+                await taskApiservice.create(userToken, { titulo, descripcion });
+                Alert.alert("Éxito", "Tarea creada correctamente");
             }
-        } catch (error) {
-            console.error("Error al crear:", error);
-            Alert.alert("Error", "No se pudo conectar con el servidor.");
-        } finally {
-            setLoading(false);
+            
+            // ESTA LÍNEA ES LA QUE TE DEVUELVE A LA PAGINA PRINCIPAL
+            onBack(); 
+        } catch (e) {
+            Alert.alert("Error", "No se pudo guardar la tarea");
         }
     };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.header}>Crear Nueva Tarea</Text>
-
-            <View style={styles.form}>
-                <Text style={styles.label}>Título</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="¿Qué tarea tienes pendiente?"
-                    value={titulo}
-                    onChangeText={setTitulo}
-                />
-
-                <Text style={styles.label}>Descripción</Text>
-                <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Escribe los detalles aquí..."
-                    value={descripcion}
-                    onChangeText={setDescripcion}
-                    multiline={true}
-                    numberOfLines={4}
-                />
-
-                {loading ? (
-                    <ActivityIndicator size="large" color="#00ff4c" />
-                ) : (
-                    <TouchableOpacity 
-                        style={styles.button} 
-                        onPress={handleCreateTask}
-                    >
-                        <Text style={styles.buttonText}>GUARDAR TAREA</Text>
-                    </TouchableOpacity>
-                )}
+            <Text style={styles.label}>{taskToEdit ? "Editar Tarea" : "Nueva Tarea"}</Text>
+            <TextInput 
+                style={styles.input} 
+                placeholder="Título" 
+                value={titulo} 
+                onChangeText={setTitulo} 
+            />
+            <TextInput 
+                style={styles.input} 
+                placeholder="Descripción" 
+                value={descripcion} 
+                onChangeText={setDescripcion} 
+                multiline
+            />
+            <Button title="GUARDAR TAREA" onPress={handleSave} color="green" />
+            <View style={{ marginTop: 10 }}>
+                <Button title="CANCELAR" onPress={onBack} color="gray" />
             </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
-        padding: 20,
-        justifyContent: 'center',
-    },
-    header: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#2e7d32',
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    form: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 12,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: 'bold',
-        color: '#444',
-        marginBottom: 5,
-    },
-    input: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 6,
-        padding: 10,
-        marginBottom: 15,
-        fontSize: 16,
-    },
-    textArea: {
-        height: 80,
-        textAlignVertical: 'top',
-    },
-    button: {
-        backgroundColor: '#00ff4c',
-        padding: 15,
-        borderRadius: 8,
-        alignItems: 'center',
-    },
-    buttonText: {
-        color: '#000',
-        fontWeight: 'bold',
-        fontSize: 16,
-    },
+    container: { flex: 1, padding: 20, justifyContent: 'center' },
+    label: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+    input: { borderBottomWidth: 1, borderColor: '#ccc', marginBottom: 20, padding: 10 }
 });
 
 export default TaskScreen;

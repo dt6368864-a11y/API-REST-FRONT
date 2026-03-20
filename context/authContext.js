@@ -5,7 +5,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [userToken, setUserToken] = useState(null);
-    const [userData, setUserData] = useState(null); // Para guardar la foto y nombre
+    const [userData, setUserData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const login = async (token, user) => {
@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }) => {
                 setUserData(JSON.parse(user));
             }
         } catch (e) {
-            console.log('Error en persistencia: ', e);
+            console.log('Error de persistencia:', e);
         } finally {
             setIsLoading(false);
         }

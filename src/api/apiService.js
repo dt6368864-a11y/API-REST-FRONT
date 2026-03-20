@@ -1,9 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// src/api/apiService.js
-// src/api/apiService.js
-const BASE_URL = "http://192.168.1.8:8000/api"; // Cambiado de .12 a .8
 
-// 1. Objeto para tareas (GetAll, Create, Update, Delete)
+// Dirección IP de tu PC según ipconfig
+const BASE_URL = "http://192.168.1.8:8000/api"; 
+
 export const taskApiservice = {
     getAll: (token) => fetch(`${BASE_URL}/tareas/`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -18,6 +17,7 @@ export const taskApiservice = {
         body: JSON.stringify(data)
     }).then(res => res.json()),
 
+    // NUEVO: Método para actualizar tareas existentes
     update: (token, id, data) => fetch(`${BASE_URL}/tareas/${id}/`, {
         method: "PUT",
         headers: {
@@ -33,64 +33,13 @@ export const taskApiservice = {
     })
 };
 
-// 2. Función de Login independiente (Esto soluciona tu error de la imagen)
-// Al final de src/api/apiService.js, fuera de cualquier llave { }
 export const loginService = async (email, password) => {
     const response = await fetch(`${BASE_URL}/auth/login/`, {
         method: "POST",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
     });
-
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || 'Error en login');
     return data;
 };
-// export const loginService = async (email, password) => {
-//     try {
-//         const response = await fetch(`${BASE_URL}/auth/login/`, {
-//             method: "POST",
-//             headers: { 'Content-Type': 'application/json' },
-//             body: JSON.stringify({ email, password })
-//         });
-
-//         const data = await response.json();
-
-//         if (!response.ok) {
-//             // Esto captura errores 400, 401 o 500 de Django
-//             throw new Error(data.error || 'Error al iniciar sesión');
-//         }
-
-//         return data; 
-//     } catch (error) {
-//         console.error("Error en loginService:", error);
-//         throw error;
-//     }
-// };
-
-// export const getTasks = async (token) => {
-//     try {
-//         const response = await fetch(`${BASE_URL}/tareas/`, { 
-//             method: "GET",
-//             headers: {
-//                 'Authorization': `Bearer ${token}`, 
-//                 'Content-Type': 'application/json'
-//             }
-//         });
-
-//         const text = await response.text();
-        
-//         if (!response.ok) {
-//             console.log("--- ERROR DE DJANGO ---");
-//             console.log("Status:", response.status);
-//             console.log("Cuerpo:", text);
-//             throw new Error(`Error ${response.status}: No se pudo obtener datos`);
-//         }
-
-//         return JSON.parse(text);
-//     } catch (error) {
-//         console.error("Error en getTasks:", error);
-//         throw error;
-//     }
-// };
-

@@ -1,10 +1,9 @@
-// screens/LoginScreen.js
 import React, { useState, useContext } from "react";
 import { View, TextInput, Button, StyleSheet, Text, ActivityIndicator, Alert } from 'react-native';
 import { AuthContext } from "../context/authContext";
 import { loginService } from '../src/api/apiService';
 
-export const LoginScreen = () => {
+const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -15,7 +14,10 @@ export const LoginScreen = () => {
         setLoading(true);
         try {
             const data = await loginService(email, password);
-            if (data.token) login(data.token);
+            // IMPORTANTE: Pasamos token y el objeto de usuario (ajustar según tu Django)
+            if (data.token) {
+                login(data.token, data.user || { nombre: email.split('@')[0] });
+            }
         } catch (e) {
             Alert.alert("Error de login", e.message);
         } finally {
@@ -25,7 +27,7 @@ export const LoginScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={{ fontSize: 24, textAlign: 'center', color: 'green', marginBottom: 20 }}>Iniciar Sesión</Text>
+            <Text style={styles.title}>Iniciar Sesión</Text>
             <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" />
             <TextInput style={styles.input} placeholder="Password" value={password} onChangeText={setPassword} secureTextEntry />
             {loading ? <ActivityIndicator color="green" /> : <Button title="INICIAR SESIÓN" onPress={handleLogin} color="green" />}
@@ -35,6 +37,7 @@ export const LoginScreen = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, justifyContent: "center", padding: 20 },
+    title: { fontSize: 24, textAlign: 'center', color: 'green', marginBottom: 20 },
     input: { borderBottomWidth: 1, borderColor: "#ccc", marginBottom: 20, padding: 10 },
 });
 

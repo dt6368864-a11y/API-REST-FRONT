@@ -3,18 +3,18 @@ import { StyleSheet, Text, View, Button, ActivityIndicator, FlatList, SafeAreaVi
 import { AuthProvider, AuthContext } from './context/authContext';
 import { taskApiservice } from './src/api/apiService';
 import LoginScreen from './screens/LoginScreen';
-import TaskScreen from './screens/TaskScreen'; // Asegúrate que el archivo exista
+import TaskScreen from './screens/TaskScreen';
 
 const NavigationWrapper = () => {
     const { userToken, userData, logout, isLoading } = useContext(AuthContext);
     const [tasks, setTasks] = useState([]);
-    const [view, setView] = useState('list'); // 'list' o 'create'
+    const [view, setView] = useState('list');
 
     const cargarTareas = () => {
         if (userToken) {
             taskApiservice.getAll(userToken)
                 .then(res => setTasks(res.datos || []))
-                .catch(err => console.log(err));
+                .catch(err => console.log("Error al cargar:", err));
         }
     };
 
@@ -31,13 +31,15 @@ const NavigationWrapper = () => {
 
     if (isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
     if (!userToken) return <LoginScreen />;
-    if (view === 'create') return <TaskScreen onBack={() => { setView('list'); cargarTareas(); }} />;
+    
+    if (view === 'create') {
+        return <TaskScreen onBack={() => { setView('list'); cargarTareas(); }} />;
+    }
 
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {/* FOTO DEL USUARIO */}
                     <Image 
                         source={{ uri: userData?.foto_url || 'https://via.placeholder.com/50' }} 
                         style={styles.avatar} 
@@ -61,7 +63,7 @@ const NavigationWrapper = () => {
                             <Text>{item.descripcion}</Text>
                         </View>
                         <TouchableOpacity onPress={() => confirmarEliminar(item.id)}>
-                            <Text style={{ color: 'red' }}>Eliminar</Text>
+                            <Text style={{ color: 'red', fontWeight: 'bold' }}>Eliminar</Text>
                         </TouchableOpacity>
                     </View>
                 )}
@@ -72,12 +74,12 @@ const NavigationWrapper = () => {
 
 const styles = StyleSheet.create({
     container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 40, alignItems: 'center' },
-    avatar: { width: 45, height: 45, borderRadius: 22, marginRight: 10 },
+    header: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 40, alignItems: 'center', marginBottom: 10 },
+    avatar: { width: 45, height: 45, borderRadius: 22, marginRight: 10, backgroundColor: '#ddd' },
     welcome: { fontSize: 18, fontWeight: 'bold' },
     btnNueva: { backgroundColor: 'green', padding: 15, borderRadius: 10, marginVertical: 20, alignItems: 'center' },
     btnText: { color: 'white', fontWeight: 'bold' },
-    card: { padding: 15, backgroundColor: 'white', marginBottom: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }
+    card: { padding: 15, backgroundColor: 'white', marginBottom: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center', elevation: 2 }
 });
 
 export default function App() {
