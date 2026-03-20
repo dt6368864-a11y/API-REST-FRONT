@@ -1,16 +1,7 @@
-// App.js
 import React, { useContext, useState, useEffect } from 'react';
 import { 
-    StyleSheet, 
-    Text, 
-    View, 
-    Button, 
-    ActivityIndicator, 
-    FlatList, 
-    SafeAreaView, 
-    Image, 
-    TouchableOpacity, 
-    Alert 
+    StyleSheet, Text, View, Button, ActivityIndicator, 
+    FlatList, SafeAreaView, Image, TouchableOpacity 
 } from 'react-native';
 import { AuthProvider, AuthContext } from './context/authContext';
 import { taskApiservice } from './src/api/apiService';
@@ -27,23 +18,11 @@ const NavigationWrapper = () => {
         if (userToken) {
             taskApiservice.getAll(userToken)
                 .then(res => setTasks(res.datos || []))
-                .catch(err => console.log("Error al cargar:", err));
+                .catch(err => console.log(err));
         }
     };
 
-    useEffect(() => {
-        cargarTareas();
-    }, [userToken]);
-
-    const handleEdit = (tarea) => {
-        setSelectedTask(tarea);
-        setView('create');
-    };
-
-    const handleNew = () => {
-        setSelectedTask(null);
-        setView('create');
-    };
+    useEffect(() => { cargarTareas(); }, [userToken]);
 
     if (isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
     if (!userToken) return <LoginScreen />;
@@ -64,16 +43,16 @@ const NavigationWrapper = () => {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Image 
-                        source={{ uri: userData?.foto_url || 'https://via.placeholder.com/50' }} 
-                        style={styles.avatar} 
-                    />
+                    <Image source={{ uri: userData?.foto_url || 'https://via.placeholder.com/50' }} style={styles.avatar} />
                     <Text style={styles.welcome}>Hola, {userData?.nombre || 'Usuario'}</Text>
                 </View>
                 <Button title="Salir" onPress={logout} color="red" />
             </View>
 
-            <TouchableOpacity style={styles.btnNueva} onPress={handleNew}>
+            <TouchableOpacity 
+                style={styles.btnNueva} 
+                onPress={() => { setSelectedTask(null); setView('create'); }}
+            >
                 <Text style={styles.btnText}>+ NUEVA TAREA</Text>
             </TouchableOpacity>
 
@@ -81,31 +60,13 @@ const NavigationWrapper = () => {
                 data={tasks}
                 keyExtractor={(item) => item.id.toString()}
                 renderItem={({ item }) => (
-                    <View style={styles.card}>
-                        {/* El texto saldrá completo */}
+                    <TouchableOpacity style={styles.card} onPress={() => { setSelectedTask(item); setView('create'); }}>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.taskTitle}>{item.titulo}</Text>
                             <Text style={styles.taskDesc}>{item.descripcion}</Text>
                         </View>
-                        
-                        {/* Los botones siempre estarán centrados verticalmente */}
-                        <View style={styles.actionsContainer}>
-                            <TouchableOpacity onPress={() => handleEdit(item)}>
-                                <Text style={styles.btnEdit}>Editar</Text>
-                            </TouchableOpacity>
-                            
-                            <TouchableOpacity onPress={() => {
-                                Alert.alert("Eliminar", "¿Borrar esta tarea?", [
-                                    { text: "No" },
-                                    { text: "Si", onPress: () => {
-                                        taskApiservice.delete(userToken, item.id).then(cargarTareas);
-                                    }}
-                                ]);
-                            }}>
-                                <Text style={styles.btnDelete}>Eliminar</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
+                        <Text style={{ color: 'blue', fontWeight: 'bold' }}>Ver/Editar</Text>
+                    </TouchableOpacity>
                 )}
             />
         </SafeAreaView>
@@ -113,39 +74,18 @@ const NavigationWrapper = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 40, alignItems: 'center' },
-    avatar: { width: 45, height: 45, borderRadius: 22, marginRight: 10, backgroundColor: '#ddd' },
+    container: { flex: 1, paddingHorizontal: 20, backgroundColor: '#f5f5f5' },
+    header: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 50, marginBottom: 10, alignItems: 'center' },
+    avatar: { width: 45, height: 45, borderRadius: 22, marginRight: 10 },
     welcome: { fontSize: 18, fontWeight: 'bold' },
     btnNueva: { backgroundColor: 'green', padding: 15, borderRadius: 10, marginVertical: 20, alignItems: 'center' },
     btnText: { color: 'white', fontWeight: 'bold' },
     card: { 
-        padding: 15, 
-        backgroundColor: 'white', 
-        marginBottom: 10, 
-        borderRadius: 8, 
-        flexDirection: 'row', 
-        // 'center' asegura que los botones se centren verticalmente 
-        // respecto a la altura total de la tarjeta
-        alignItems: 'center', 
-        elevation: 2 
+        padding: 15, backgroundColor: 'white', marginBottom: 12, 
+        borderRadius: 12, flexDirection: 'row', alignItems: 'center', elevation: 3 
     },
-    taskTitle: { fontWeight: 'bold', fontSize: 16, marginBottom: 5 },
-    taskDesc: { fontSize: 14, color: '#444' },
-    actionsContainer: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        marginLeft: 10
-    },
-    btnEdit: { 
-        color: 'blue', 
-        fontWeight: 'bold', 
-        marginRight: 15 
-    },
-    btnDelete: { 
-        color: 'red', 
-        fontWeight: 'bold' 
-    }
+    taskTitle: { fontWeight: 'bold', fontSize: 17, marginBottom: 5 },
+    taskDesc: { fontSize: 14, color: '#666' }
 });
 
 export default function App() {
