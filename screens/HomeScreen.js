@@ -1,0 +1,48 @@
+import React, { useContext } from "react";
+import { View, Text, Styleheet, TouchableOpacity, image } from 'react-native';
+
+const HomeScreen = ({ navigation }) => {
+    const { logout } = useContext(AuthContext);
+
+    return (
+        <View>
+            <View>
+                <text style={Styleheet.welcome}>
+                    Hola desarrollador!
+                </text>
+                <text style={Styleheet.sub}>
+                    Bienvenido al panel principal
+                </text>
+            </View>
+
+            <View style={styles.menuGrid}>
+                <TouchableOpacity
+                    style={styles.card}
+                    onPress={() => navigation.navigate('Tasks')}
+                >
+                    <Text style={styles.cardIcon}>📋</Text>
+                    <Text style={styles.cardText}>Gestionar Tareas</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.card} onPress={logout}>
+                    <Text style={styles.cardIcon}>🚪</Text>
+                    <Text style={styles.cardText}>Cerrar Sesion</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+}
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#f6f2f5', padding: 20 },
+    header: { marginTop: 60, marginBottom: 30 },
+    welcome: { fontSize: 28, fontWeight: 'bold', color: '#39A900' },
+    sub: { fontSize: 16, color: '#666' },
+    menuGrid: { flexDirection: 'row', justifyContent: 'space-between' },
+    card: {backgroundColor: '#fff',width: '48%',padding: 20,borderRadius: 15,elevation: 4},
+    cardIcon: { fontSize: 40, marginBottom: 10 },
+    cardText: { fontWeight: 'bold', color: '#333' }
+});
+
+export default HomeScreen;
+
+
