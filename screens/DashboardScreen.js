@@ -1,121 +1,168 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'; 
 import * as ImagePicker from 'expo-image-picker'; 
 
 const DashboardScreen = ({ onNavigate, currentImageURI, onImageUpdate }) => {
     
-    // Función para abrir la galería y seleccionar una foto
-    const pickImage = async () => {
-        // Pedir permisos para acceder a la galería
+    const seleccionarImagen = async () => {
+
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         
         if (status !== 'granted') {
             Alert.alert(
                 'Permiso denegado',
-                'Necesitamos permiso para acceder a tus fotos para cambiar la foto de perfil.'
+                'Es necesario el permiso de la galería para cambiar la foto.'
             );
             return;
         }
 
-        // Abrir el selector de imágenes
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true, // Permite recortar
-            aspect: [1, 1], // Proporción cuadrada
+        let resultado = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: 'images', 
+            allowsEditing: true, 
+            aspect: [1, 1], 
             quality: 0.7, 
         });
 
-        if (!result.canceled && result.assets && result.assets.length > 0) {
-            // Actualizamos el estado en App.js mediante la prop
-            onImageUpdate(result.assets[0].uri);
-            Alert.alert('Éxito', 'Foto de perfil actualizada.');
+        if (!resultado.canceled && resultado.assets && resultado.assets.length > 0) {
+            onImageUpdate(resultado.assets[0].uri);
+            Alert.alert('Éxito', 'La foto de perfil ha sido actualizada.');
         }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Barra de Navegación Superior */}
-            <View style={styles.navBar}>
-                <TouchableOpacity onPress={() => onNavigate('home')} style={styles.backButton}>
-                    <Text style={styles.backText}>‹</Text>
+        <SafeAreaView style={styles.contenedorPantalla}>
+            
+            <View style={styles.barraNavegacion}>
+                <TouchableOpacity 
+                    onPress={() => onNavigate('home')} 
+                    style={styles.botonRegresarIcono}
+                >
+                    <Text style={styles.iconoAtras}>‹</Text>
                 </TouchableOpacity>
-                <Text style={styles.navTitle}>Configuración</Text>
-                <View style={styles.placeholder} /> 
+                <Text style={styles.tituloHeader}>Configuración</Text>
+                <View style={{ width: 40 }} /> 
             </View>
 
-            {/* Contenido Principal */}
-            <View style={styles.content}>
-                <Text style={styles.title}>📸 Cambiar Foto de Perfil</Text>
+            <View style={styles.contenidoCentral}>
+                <Text style={styles.tituloSeccion}>📸 Cambiar Foto de Perfil</Text>
 
-                {/* Círculo de la foto */}
-                <View style={styles.imageContainer}>
+                <View style={styles.marcoFoto}>
                     {currentImageURI ? (
-                        <Image source={{ uri: currentImageURI }} style={styles.avatarImage} />
+                        <Image 
+                            source={{ uri: currentImageURI }} 
+                            style={styles.fotoRedonda} 
+                        />
                     ) : (
-                        <View style={styles.placeholderCircle}>
-                            <Text style={styles.placeholderText}>Sin imagen seleccionada</Text>
+                        <View style={styles.circuloGris}>
+                            <Text style={styles.textoSinFoto}>Sin imagen seleccionada</Text>
                         </View>
                     )}
                 </View>
 
-                {/* Botón de Selección */}
-                <TouchableOpacity style={styles.pickButton} onPress={pickImage}>
-                    <Text style={styles.pickButtonText}>Elegir de la galería</Text>
+                <TouchableOpacity style={styles.botonAccionVerde} onPress={seleccionarImagen}>
+                    <Text style={styles.textoBotonVerde}>Elegir de la galería</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity 
-                    style={[styles.pickButton, { marginTop: 20, borderColor: '#ccc' }]} 
+                    style={styles.botonVolverGris} 
                     onPress={() => onNavigate('home')}
                 >
-                    <Text style={{ color: '#666', fontWeight: 'bold' }}>Regresar al Inicio</Text>
+                    <Text style={styles.textoBotonGris}>Regresar al Inicio</Text>
                 </TouchableOpacity>
             </View>
+
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#fff' },
-    navBar: { 
-        flexDirection: 'row', 
-        alignItems: 'center', 
+    contenedorPantalla: {
+        flex: 1,
+        backgroundColor: '#FFFFFF',
+    },
+    barraNavegacion: {
+        flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 15, 
-        height: 60, 
-        borderBottomWidth: 1, 
-        borderBottomColor: '#eee',
-        marginTop: 35
+        paddingHorizontal: 15,
+        height: 60,
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEEEEE',
     },
-    backButton: { padding: 5 },
-    backText: { fontSize: 40, color: '#39A900', lineHeight: 40 },
-    navTitle: { fontSize: 18, fontWeight: '600' },
-    placeholder: { width: 40 },
-    content: { flex: 1, alignItems: 'center', paddingHorizontal: 20 },
-    title: { fontSize: 22, fontWeight: '700', marginTop: 30, marginBottom: 40, color: '#222' },
-    imageContainer: { marginBottom: 40 },
-    avatarImage: { width: 180, height: 180, borderRadius: 90 },
-    placeholderCircle: { 
-        width: 180, 
-        height: 180, 
-        borderRadius: 90, 
-        backgroundColor: '#F0F0F0', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        padding: 20 
+    botonRegresarIcono: {
+        padding: 5,
     },
-    placeholderText: { textAlign: 'center', color: '#888', fontSize: 14 },
-    pickButton: { 
-        width: '100%', 
-        borderWidth: 2, 
-        borderColor: '#39A900', 
-        borderRadius: 8, 
-        paddingVertical: 12, 
-        alignItems: 'center', 
-        backgroundColor: '#fff'
+    iconoAtras: {
+        fontSize: 40,
+        color: '#39A900',
+        lineHeight: 40,
     },
-    pickButtonText: { color: '#39A900', fontWeight: 'bold', fontSize: 15 }
+    tituloHeader: {
+        fontSize: 18,
+        fontWeight: '600',
+    },
+    contenidoCentral: {
+        flex: 1,
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    tituloSeccion: {
+        fontSize: 22,
+        fontWeight: '700',
+        marginTop: 30,
+        marginBottom: 40,
+        color: '#222222',
+    },
+    marcoFoto: {
+        marginBottom: 40,
+    },
+    fotoRedonda: {
+        width: 180,
+        height: 180,
+        borderRadius: 90,
+    },
+    circuloGris: {
+        width: 180,
+        height: 180,
+        borderRadius: 90,
+        backgroundColor: '#F0F0F0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    textoSinFoto: {
+        textAlign: 'center',
+        color: '#888888',
+        fontSize: 14,
+    },
+    botonAccionVerde: {
+        width: '100%',
+        borderWidth: 2,
+        borderColor: '#39A900',
+        borderRadius: 8,
+        paddingVertical: 12,
+        alignItems: 'center',
+        backgroundColor: '#FFFFFF',
+    },
+    textoBotonVerde: {
+        color: '#39A900',
+        fontWeight: 'bold',
+        fontSize: 15,
+    },
+    botonVolverGris: {
+        width: '100%',
+        borderWidth: 1,
+        borderColor: '#CCCCCC',
+        borderRadius: 8,
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: 20,
+    },
+    textoBotonGris: {
+        color: '#666666',
+        fontWeight: 'bold',
+    },
 });
 
 export default DashboardScreen;
-
-//original

@@ -11,11 +11,9 @@ const LoginScreen = () => {
     const handleLogin = async () => {
         try {
             const data = await loginService(email, password);
-            
-            // Verificamos que el backend responda con el token y el objeto user
+
             if (data.token && data.user) {
-                // Pasamos el token y el objeto que ya trae (nombre, rol, email)
-                // También aseguramos que el UID quede guardado para la foto de perfil
+ 
                 const userPayload = {
                     ...data.user,
                     uid: data.uid || data.user.uid
@@ -27,7 +25,7 @@ const LoginScreen = () => {
                 login(data.token, { email, uid: data.uid, rol: 'aprendiz' });
             }
         } catch (e) {
-            // Manejo de errores más amigable
+ 
             Alert.alert("Error de Acceso", e.message || "Credenciales incorrectas");
         }
     };

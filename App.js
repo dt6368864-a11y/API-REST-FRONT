@@ -6,7 +6,7 @@ import { AuthProvider, AuthContext } from './context/authContext';
 import LoginScreen from './screens/LoginScreen';
 import TaskScreen from './screens/TaskScreen';
 import HomeScreen from './screens/HomeScreen';
-import PhotoScreen from './screens/DashboardScreen'; // dashboard.js en tu imagen se llama DashboardScreen.js
+import PhotoScreen from './screens/DashboardScreen';
 
 const NavigationWrapper = () => {
   const { userToken, isLoading } = useContext(AuthContext);
@@ -36,7 +36,7 @@ const NavigationWrapper = () => {
       {currentView === 'tasks' && (
         <View style={{ flex: 1 }}>
           <TouchableOpacity onPress={() => setCurrentView('home')} style={styles.backBtn}>
-            <Text style={styles.backText}>← Volver al Inicio</Text>
+            <Text style={styles.backText}>⬅️ Volver al Inicio</Text>
           </TouchableOpacity>
           <TaskScreen />
         </View>
