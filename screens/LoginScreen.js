@@ -11,17 +11,45 @@ const LoginScreen = () => {
     const handleLogin = async () => {
         try {
             const data = await loginService(email, password);
-            login(data.token, data.user);
+            
+            // Verificamos que el backend responda con el token y el objeto user
+            if (data.token && data.user) {
+                // Pasamos el token y el objeto que ya trae (nombre, rol, email)
+                // También aseguramos que el UID quede guardado para la foto de perfil
+                const userPayload = {
+                    ...data.user,
+                    uid: data.uid || data.user.uid
+                };
+                
+                login(data.token, userPayload);
+            } else {
+                // Caso de respaldo por si el backend no envía el objeto 'user'
+                login(data.token, { email, uid: data.uid, rol: 'aprendiz' });
+            }
         } catch (e) {
-            Alert.alert("Error", e.message);
+            // Manejo de errores más amigable
+            Alert.alert("Error de Acceso", e.message || "Credenciales incorrectas");
         }
     };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>MiAppTareas</Text>
-            <TextInput style={styles.input} placeholder="Email" value={email} onChangeText={setEmail} />
-            <TextInput style={styles.input} placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} />
+            <TextInput 
+                style={styles.input} 
+                placeholder="Email" 
+                value={email} 
+                onChangeText={setEmail} 
+                autoCapitalize="none"
+                keyboardType="email-address"
+            />
+            <TextInput 
+                style={styles.input} 
+                placeholder="Password" 
+                secureTextEntry 
+                value={password} 
+                onChangeText={setPassword} 
+            />
             <Button title="Entrar" onPress={handleLogin} color="#39A900" />
         </View>
     );
@@ -34,3 +62,4 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+

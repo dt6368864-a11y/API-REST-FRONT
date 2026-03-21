@@ -13,7 +13,10 @@ const HomeScreen = ({ onNavigate, currentImageURI }) => {
                 <Image source={{ uri: currentImageURI || defaultImage }} style={styles.avatar} />
                 <View>
                     <Text style={styles.name}>{userData?.nombre || "Usuario-ADSO"}</Text>
-                    <Text style={styles.role}>{userData?.rol || "ESTUDIANTE"}</Text>
+                    {/* Muestra el rol dinámico en mayúsculas */}
+                    <Text style={styles.role}>
+                        {userData?.rol ? userData.rol.toUpperCase() : "APRENDIZ"}
+                    </Text>
                 </View>
             </View>
             <View style={styles.menu}>
