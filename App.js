@@ -1,97 +1,97 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { 
-    StyleSheet, Text, View, Button, ActivityIndicator, 
-    FlatList, SafeAreaView, Image, TouchableOpacity 
-} from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { StyleSheet, View, ActivityIndicator, TouchableOpacity, Text } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Importamos para guardar en disco
+
 import { AuthProvider, AuthContext } from './context/authContext';
-import { taskApiservice } from './src/api/apiService';
 import LoginScreen from './screens/LoginScreen';
 import TaskScreen from './screens/TaskScreen';
+import HomeScreen from './screens/HomeScreen';
+import PhotoScreen from './screens/DashboardScreen'; 
 
 const NavigationWrapper = () => {
-    const { userToken, userData, logout, isLoading } = useContext(AuthContext);
-    const [tasks, setTasks] = useState([]);
-    const [view, setView] = useState('list');
-    const [selectedTask, setSelectedTask] = useState(null);
+  const { userToken, isLoading, userData } = useContext(AuthContext); // Extraemos userData para el UID
+  const [currentView, setCurrentView] = useState('home');
+  const [profileImageURI, setProfileImageURI] = useState(null);
 
-    const cargarTareas = () => {
-        if (userToken) {
-            taskApiservice.getAll(userToken)
-                .then(res => setTasks(res.datos || []))
-                .catch(err => console.log(err));
+  // EFECTO: Carga la foto guardada cuando el usuario inicia sesión
+  useEffect(() => {
+    const loadSavedImage = async () => {
+      const uid = userData?.uid || userData?.localId;
+      if (uid) {
+        const savedImage = await AsyncStorage.getItem(`profileImage_${uid}`);
+        if (savedImage) {
+          setProfileImageURI(savedImage);
         }
+      }
     };
+    loadSavedImage();
+  }, [userData]); // Se dispara cuando el usuario cambia o entra
 
-    useEffect(() => { cargarTareas(); }, [userToken]);
-
-    if (isLoading) return <ActivityIndicator style={{ flex: 1 }} />;
-    if (!userToken) return <LoginScreen />;
-    
-    if (view === 'create') {
-        return (
-            <TaskScreen 
-                taskToEdit={selectedTask} 
-                onBack={() => { 
-                    setView('list'); 
-                    cargarTareas(); 
-                }} 
-            />
-        );
+  // FUNCIÓN: Guarda la foto permanentemente al actualizarla
+  const handleImageUpdate = async (uri) => {
+    setProfileImageURI(uri); // Actualiza la vista
+    const uid = userData?.uid || userData?.localId;
+    if (uid) {
+      try {
+        await AsyncStorage.setItem(`profileImage_${uid}`, uri); // Guarda en el teléfono
+      } catch (e) {
+        console.log("Error al guardar imagen local:", e);
+      }
     }
+  };
 
+  if (isLoading) {
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Image source={{ uri: userData?.foto_url || 'https://via.placeholder.com/50' }} style={styles.avatar} />
-                    <Text style={styles.welcome}>Hola, {userData?.nombre || 'Usuario'}</Text>
-                </View>
-                <Button title="Salir" onPress={logout} color="red" />
-            </View>
-
-            <TouchableOpacity 
-                style={styles.btnNueva} 
-                onPress={() => { setSelectedTask(null); setView('create'); }}
-            >
-                <Text style={styles.btnText}>+ NUEVA TAREA</Text>
-            </TouchableOpacity>
-
-            <FlatList
-                data={tasks}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => (
-                    <TouchableOpacity style={styles.card} onPress={() => { setSelectedTask(item); setView('create'); }}>
-                        <View style={{ flex: 1 }}>
-                            <Text style={styles.taskTitle}>{item.titulo}</Text>
-                            <Text style={styles.taskDesc}>{item.descripcion}</Text>
-                        </View>
-                        <Text style={{ color: 'blue', fontWeight: 'bold' }}>Ver/Editar</Text>
-                    </TouchableOpacity>
-                )}
-            />
-        </SafeAreaView>
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#39A900" />
+      </View>
     );
+  }
+
+  if (!userToken) {
+    return <LoginScreen />;
+  }
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="dark" />
+      
+      {currentView === 'home' && (
+        <HomeScreen onNavigate={setCurrentView} currentImageURI={profileImageURI} />
+      )}
+
+      {currentView === 'tasks' && (
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity onPress={() => setCurrentView('home')} style={styles.backBtn}>
+            <Text style={styles.backText}>← Volver al Inicio</Text>
+          </TouchableOpacity>
+          <TaskScreen />
+        </View>
+      )}
+
+      {currentView === 'photo' && (
+        <PhotoScreen 
+            onNavigate={setCurrentView} 
+            currentImageURI={profileImageURI} 
+            onImageUpdate={handleImageUpdate} // Usamos la nueva función de guardado
+        />
+      )}
+    </View>
+  );
 };
 
-const styles = StyleSheet.create({
-    container: { flex: 1, paddingHorizontal: 20, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 50, marginBottom: 10, alignItems: 'center' },
-    avatar: { width: 45, height: 45, borderRadius: 22, marginRight: 10 },
-    welcome: { fontSize: 18, fontWeight: 'bold' },
-    btnNueva: { backgroundColor: 'green', padding: 15, borderRadius: 10, marginVertical: 20, alignItems: 'center' },
-    btnText: { color: 'white', fontWeight: 'bold' },
-    card: { 
-        padding: 15, backgroundColor: 'white', marginBottom: 12, 
-        borderRadius: 12, flexDirection: 'row', alignItems: 'center', elevation: 3 
-    },
-    taskTitle: { fontWeight: 'bold', fontSize: 17, marginBottom: 5 },
-    taskDesc: { fontSize: 14, color: '#666' }
-});
-
 export default function App() {
-    return (
-        <AuthProvider>
-            <NavigationWrapper />
-        </AuthProvider>
-    );
+  return (
+    <AuthProvider>
+      <NavigationWrapper />
+    </AuthProvider>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  backBtn: { marginTop: 50, marginLeft: 20, marginBottom: 10 },
+  backText: { color: '#39A900', fontWeight: 'bold', fontSize: 16 }
+});

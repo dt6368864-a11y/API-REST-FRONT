@@ -5,33 +5,27 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [userToken, setUserToken] = useState(null);
-    const [userData, setUserData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [userData, setUserData] = useState(null); // Para guardar nombre/rol
 
-    const login = async (token, user) => {
+    const login = async (token, user = null) => {
         setUserToken(token);
         setUserData(user);
         await AsyncStorage.setItem("userToken", token);
-        await AsyncStorage.setItem("userData", JSON.stringify(user));
     };
 
     const logout = async () => {
         setUserToken(null);
         setUserData(null);
         await AsyncStorage.removeItem('userToken');
-        await AsyncStorage.removeItem('userData');
     };
 
     const isLoggedIn = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            const user = await AsyncStorage.getItem('userData');
-            if (token) {
-                setUserToken(token);
-                setUserData(JSON.parse(user));
-            }
+            if (token) setUserToken(token);
         } catch (e) {
-            console.log('Error de persistencia:', e);
+            console.log('Error en persistencia:', e);
         } finally {
             setIsLoading(false);
         }
@@ -40,7 +34,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => { isLoggedIn(); }, []);
 
     return (
-        <AuthContext.Provider value={{ login, logout, userToken, userData, isLoading }}>
+        <AuthContext.Provider value={{ login, logout, userToken, isLoading, userData }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,48 +1,45 @@
-import React, { useContext } from "react";
-import { View, Text, Styleheet, TouchableOpacity, image } from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView } from 'react-native';
+import { AuthContext } from '../context/authContext';
 
-const HomeScreen = ({ navigation }) => {
-    const { logout } = useContext(AuthContext);
+const HomeScreen = ({ onNavigate, currentImageURI }) => {
+    const { logout, userData } = useContext(AuthContext);
+    const defaultImage = 'https://via.placeholder.com/150';
 
     return (
-        <View>
-            <View>
-                <text style={Styleheet.welcome}>
-                    Hola desarrollador!
-                </text>
-                <text style={Styleheet.sub}>
-                    Bienvenido al panel principal
-                </text>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}><Text style={styles.headerTitle}>SENA - ADSO</Text></View>
+            <View style={styles.card}>
+                <Image source={{ uri: currentImageURI || defaultImage }} style={styles.avatar} />
+                <View>
+                    <Text style={styles.name}>{userData?.nombre || "Usuario-ADSO"}</Text>
+                    <Text style={styles.role}>{userData?.rol || "ESTUDIANTE"}</Text>
+                </View>
             </View>
-
-            <View style={styles.menuGrid}>
-                <TouchableOpacity
-                    style={styles.card}
-                    onPress={() => navigation.navigate('Tasks')}
-                >
-                    <Text style={styles.cardIcon}>📋</Text>
-                    <Text style={styles.cardText}>Gestionar Tareas</Text>
+            <View style={styles.menu}>
+                <TouchableOpacity style={styles.btn} onPress={() => onNavigate('tasks')}>
+                    <Text>📋 Tareas</Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity style={styles.card} onPress={logout}>
-                    <Text style={styles.cardIcon}>🚪</Text>
-                    <Text style={styles.cardText}>Cerrar Sesion</Text>
+                <TouchableOpacity style={styles.btn} onPress={() => onNavigate('photo')}>
+                    <Text>📸 Perfil</Text>
                 </TouchableOpacity>
             </View>
-        </View>
+            <TouchableOpacity onPress={logout} style={styles.logout}><Text style={{color:'red'}}>Cerrar Sesión</Text></TouchableOpacity>
+        </SafeAreaView>
     );
-}
+};
+
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f6f2f5', padding: 20 },
-    header: { marginTop: 60, marginBottom: 30 },
-    welcome: { fontSize: 28, fontWeight: 'bold', color: '#39A900' },
-    sub: { fontSize: 16, color: '#666' },
-    menuGrid: { flexDirection: 'row', justifyContent: 'space-between' },
-    card: {backgroundColor: '#fff',width: '48%',padding: 20,borderRadius: 15,elevation: 4},
-    cardIcon: { fontSize: 40, marginBottom: 10 },
-    cardText: { fontWeight: 'bold', color: '#333' }
+    container: { flex: 1, backgroundColor: '#f5f5f5' },
+    header: { backgroundColor: '#39A900', padding: 40 },
+    headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+    card: { flexDirection: 'row', padding: 20, backgroundColor: '#fff', margin: 20, borderRadius: 10 },
+    avatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15 },
+    name: { fontWeight: 'bold', fontSize: 18 },
+    role: { color: '#39A900' },
+    menu: { flexDirection: 'row', justifyContent: 'space-around' },
+    btn: { backgroundColor: '#fff', padding: 20, borderRadius: 10, width: '40%', alignItems: 'center' },
+    logout: { position: 'absolute', bottom: 30, alignSelf: 'center' }
 });
 
 export default HomeScreen;
-
-

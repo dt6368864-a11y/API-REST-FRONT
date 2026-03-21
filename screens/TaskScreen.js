@@ -1,126 +1,222 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { 
-    View, TextInput, Button, StyleSheet, Text, 
-    Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView 
-} from 'react-native';
-import { AuthContext } from "../context/authContext";
-import { taskApiservice } from '../src/api/apiService';
+import React, { useContext, useEffect, useState } from 'react';
+import { View,Text, FlatList, StyleSheet,TouchableOpacity, Alert, ActivityIndicator,Modal,TextInput } from 'react-native';
+import { AuthContext } from '../context/authContext'; 
+import { taskApiService } from '../src/api/apiService'; 
 
-const TaskScreen = ({ onBack, taskToEdit }) => {
+const TaskScreen = () => {
     const { userToken } = useContext(AuthContext);
-    const [titulo, setTitulo] = useState('');
-    const [descripcion, setDescripcion] = useState('');
+    const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (taskToEdit) {
-            setTitulo(taskToEdit.titulo);
-            setDescripcion(taskToEdit.descripcion);
-        }
-    }, [taskToEdit]);
+    // Estados para el Modal
+    const [modalVisible, setModalVisible] = useState(false);
+    const [titulo, setTitulo] = useState('');
+    const [descripcion, setDescripcion] = useState('');
+    const [taskEditingId, setTaskEditingId] = useState(null); 
+    const [procesando, setProcesando] = useState(false);
 
-    const handleSave = async () => {
-        if (!titulo.trim() || !descripcion.trim()) {
-            return Alert.alert("Error", "Por favor completa todos los campos");
-        }
-        
+    useEffect(() => { 
+        if (userToken) fetchTasks(); 
+    }, [userToken]);
+
+    const fetchTasks = async () => {
         setLoading(true);
         try {
-            if (taskToEdit) {
-                // LÓGICA DE EDITAR
-                await taskApiservice.update(userToken, taskToEdit.id, { titulo, descripcion });
+            const data = await taskApiService.getAll(userToken);
+            
+            // ADAPTACIÓN CLAVE: Verificamos dónde vienen los datos
+            // Si tu Django devuelve { "datos": [...] } o simplemente [...]
+            if (data && data.datos) {
+                setTasks(data.datos);
+            } else if (Array.isArray(data)) {
+                setTasks(data);
             } else {
-                // LÓGICA DE CREAR
-                await taskApiservice.create(userToken, { titulo, descripcion });
+                setTasks([]); // Si no hay datos, lista vacía
             }
-            onBack(); 
-        } catch (e) {
-            Alert.alert("Error", "No se pudo guardar la tarea");
-        } finally {
-            setLoading(false);
+        } catch (error) { 
+            console.error("Error al cargar tareas:", error); 
+        } finally { 
+            setLoading(false); 
         }
     };
 
-    const handleDelete = () => {
+    const handleGuardarTarea = async () => {
+        if (!titulo.trim() || !descripcion.trim()) {
+            Alert.alert("Aviso", "Por favor, completa el título y la descripción.");
+            return;
+        }
+
+        setProcesando(true);
+        try {
+            const payload = { 
+                titulo: titulo.trim(), 
+                descripcion: descripcion.trim() 
+            };
+            
+            if (taskEditingId) {
+                await taskApiService.update(userToken, taskEditingId, payload);
+                setTasks(prev => prev.map(t => t.id === taskEditingId ? { ...t, ...payload } : t));
+                Alert.alert("Éxito", "Tarea actualizada correctamente");
+            } else {
+                const res = await taskApiService.create(userToken, payload);
+                // Si el servidor no devuelve el ID nuevo, usamos uno temporal para la lista
+                const nuevaTareaLocal = {
+                    id: res?.id || Math.random().toString(),
+                    ...payload
+                };
+                setTasks(prev => [nuevaTareaLocal, ...prev]);
+                Alert.alert("Éxito", "Tarea creada correctamente");
+            }
+            cerrarModal();
+        } catch (error) {
+            Alert.alert("Error", "No se pudo sincronizar con el servidor");
+        } finally {
+            setProcesando(false);
+        }
+    };
+
+    const abrirEditar = (item) => {
+        setTaskEditingId(item.id);
+        setTitulo(item.titulo);
+        setDescripcion(item.descripcion);
+        setModalVisible(true);
+    };
+
+    const cerrarModal = () => {
+        setModalVisible(false);
+        setTitulo('');
+        setDescripcion('');
+        setTaskEditingId(null);
+    };
+
+    const eliminarTarea = (id) => {
         Alert.alert("Eliminar", "¿Estás seguro de borrar esta tarea?", [
-            { text: "Cancelar" },
+            { text: "Cancelar", style: "cancel" },
             { 
-                text: "Sí, eliminar", 
+                text: "Eliminar", 
+                style: "destructive", 
                 onPress: async () => {
-                    setLoading(true);
                     try {
-                        await taskApiservice.delete(userToken, taskToEdit.id);
-                        onBack();
+                        await taskApiService.delete(userToken, id);
+                        setTasks(prev => prev.filter(t => t.id !== id));
                     } catch (e) {
                         Alert.alert("Error", "No se pudo eliminar");
-                    } finally {
-                        setLoading(false);
                     }
                 } 
             }
         ]);
     };
 
+    const renderTarea = ({ item }) => (
+        <View style={styles.card}>
+            <View style={styles.textSide}>
+                <Text style={styles.itemTitle}>{item.titulo}</Text>
+                <Text style={styles.itemDesc}>{item.descripcion}</Text>
+            </View>
+            <View style={styles.buttonSide}>
+                <TouchableOpacity onPress={() => abrirEditar(item)} style={styles.actionBtn}>
+                    <Text style={styles.iconText}>✏️</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => eliminarTarea(item.id)} style={styles.actionBtn}>
+                    <Text style={styles.iconText}>🗑️</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+
     return (
-        <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={{ flex: 1 }}
-        >
-            <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.header}>
-                    {taskToEdit ? "Detalle de Tarea" : "Nueva Tarea"}
-                </Text>
-                
-                <TextInput 
-                    style={styles.input} 
-                    placeholder="Título" 
-                    value={titulo} 
-                    onChangeText={setTitulo} 
+        <View style={styles.mainContainer}>
+            <Text style={styles.mainHeader}>Mis Tareas</Text>
+            
+            {loading ? (
+                <ActivityIndicator size="large" color="#39A900" />
+            ) : (
+                <FlatList
+                    data={tasks}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={renderTarea}
+                    contentContainerStyle={{ paddingBottom: 100 }}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No hay tareas pendientes.</Text>}
                 />
+            )}
 
-                <TextInput 
-                    style={[styles.input, styles.textArea]} 
-                    placeholder="Descripción" 
-                    value={descripcion} 
-                    onChangeText={setDescripcion} 
-                    multiline
-                    textAlignVertical="top"
-                />
-                
-                <View style={styles.buttonContainer}>
-                    {loading ? (
-                        <ActivityIndicator size="large" color="green" />
-                    ) : (
-                        <Button 
-                            title={taskToEdit ? "ACTUALIZAR CAMBIOS" : "GUARDAR TAREA"} 
-                            onPress={handleSave} 
-                            color="green" 
+            <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+                <Text style={styles.fabText}>+</Text>
+            </TouchableOpacity>
+
+            <Modal visible={modalVisible} transparent animationType="slide">
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalBox}>
+                        <Text style={styles.modalTitle}>
+                            {taskEditingId ? "Editar Tarea" : "Nueva Tarea"}
+                        </Text>
+                        
+                        <TextInput 
+                            style={styles.input} 
+                            placeholder="Título" 
+                            value={titulo} 
+                            onChangeText={setTitulo} 
                         />
-                    )}
-                </View>
+                        <TextInput 
+                            style={[styles.input, { height: 80 }]} 
+                            placeholder="Descripción" 
+                            value={descripcion} 
+                            onChangeText={setDescripcion} 
+                            multiline 
+                        />
 
-                {/* Solo mostramos el botón eliminar si estamos editando */}
-                {taskToEdit && !loading && (
-                    <View style={{ marginTop: 10 }}>
-                        <Button title="ELIMINAR TAREA" onPress={handleDelete} color="orange" />
+                        <View style={styles.modalBtns}>
+                            <TouchableOpacity onPress={cerrarModal}>
+                                <Text style={styles.cancelTxt}>Cancelar</Text>
+                            </TouchableOpacity>
+                            {procesando ? (
+                                <ActivityIndicator color="#39A900" />
+                            ) : (
+                                <TouchableOpacity style={styles.createBtn} onPress={handleGuardarTarea}>
+                                    <Text style={styles.createBtnText}>
+                                        {taskEditingId ? "Guardar" : "Crear"}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
                     </View>
-                )}
-
-                <View style={styles.cancelContainer}>
-                    <Button title="VOLVER A LA LISTA" onPress={onBack} color="red" />
                 </View>
-            </ScrollView>
-        </KeyboardAvoidingView>
+            </Modal>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { padding: 30, flexGrow: 1, justifyContent: 'center', backgroundColor: '#fff' },
-    header: { fontSize: 24, fontWeight: 'bold', marginBottom: 30, textAlign: 'center' },
-    input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, marginBottom: 20, padding: 12 },
-    textArea: { minHeight: 150 },
-    buttonContainer: { marginTop: 10 },
-    cancelContainer: { marginTop: 15 }
+    mainContainer: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 15 },
+    mainHeader: { fontSize: 26, fontWeight: 'bold', marginTop: 20, marginBottom: 20, color: '#333' },
+    card: {
+        flexDirection: 'row', backgroundColor: '#f9f9f9', padding: 15,
+        marginBottom: 12, borderRadius: 12, alignItems: 'center',
+        justifyContent: 'space-between', borderWidth: 1, borderColor: '#eee',
+        elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 3,
+    },
+    textSide: { flex: 1, paddingRight: 10 },
+    itemTitle: { fontSize: 17, fontWeight: 'bold', color: '#222' },
+    itemDesc: { fontSize: 14, color: '#666', marginTop: 4 },
+    buttonSide: { flexDirection: 'row', alignItems: 'center' },
+    actionBtn: { marginLeft: 12, padding: 5 },
+    iconText: { fontSize: 22 },
+    fab: {
+        position: 'absolute', right: 25, bottom: 25,
+        backgroundColor: '#39A900', width: 60, height: 60,
+        borderRadius: 30, justifyContent: 'center', alignItems: 'center', 
+        elevation: 5, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 5
+    },
+    fabText: { color: '#fff', fontSize: 32, fontWeight: 'bold' },
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+    modalBox: { width: '85%', backgroundColor: '#fff', padding: 25, borderRadius: 15, elevation: 10 },
+    modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
+    input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12, marginBottom: 15, fontSize: 16 },
+    modalBtns: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
+    cancelTxt: { color: 'red', fontWeight: 'bold', fontSize: 16 },
+    createBtn: { backgroundColor: '#39A900', paddingHorizontal: 25, paddingVertical: 12, borderRadius: 10 },
+    createBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+    emptyText: { textAlign: 'center', marginTop: 50, color: '#aaa', fontSize: 16 }
 });
 
 export default TaskScreen;
